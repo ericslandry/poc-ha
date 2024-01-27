@@ -1,0 +1,24 @@
+# To be able to run tasks from the CLI, run the following command (see https://taskfile.dev/installation/)
+# sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+
+version: '3'
+tasks:
+  run:
+    cmds:
+      - docker compose down --remove-orphans
+      - docker network prune -f
+      - docker compose build
+      - docker compose up -d
+  test-vrrp:
+    cmds:
+      - docker compose exec client ssh fe80::100%eth0 hostname
+      - docker compose pause gw1
+      - sleep 5
+      - docker compose exec client ssh fe80::100%eth0 hostname
+      - docker compose unpause gw1
+  test-haproxy:
+    cmds:
+      - docker compose exec client bash -c "ssh -p 2222 fe80::100%eth0 hostname"
+  test-proxyjump:
+    cmds:
+      - docker compose exec client ssh -J [fe80::100%%eth0]:2222 10.12.0.10 hostname

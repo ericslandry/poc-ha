@@ -1,0 +1,61 @@
+services:
+  client:
+    hostname: client
+    build: .
+    init: true
+    networks:
+      - inside
+
+  server:
+    hostname: server
+    build: .
+    init: true
+    networks:
+      outside:
+        ipv4_address: 10.12.0.10
+
+  gw1:
+    hostname: gw1
+    build: .
+    init: true
+    volumes:
+      - ./keepalived/gw1.conf:/etc/keepalived/keepalived.conf:ro
+      - ./haproxy.cnf:/etc/haproxy.cnf
+    networks:
+      - inside
+      - outside
+    expose:
+      - 2222
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+
+  gw2:
+    hostname: gw2
+    build: .
+    init: true
+    volumes:
+      - ./keepalived/gw2.conf:/etc/keepalived/keepalived.conf:ro
+    networks:
+      - inside
+      - outside
+    expose:
+      - 2222
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+
+networks:
+  outside:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.12.0.0/16
+
+  inside:
+    driver: bridge
+    enable_ipv6: true
+    # Can't disable IPv4 ...yet https://github.com/moby/moby/issues/32850
+    ipam:
+      config:
+        - subnet: fe80::/64
